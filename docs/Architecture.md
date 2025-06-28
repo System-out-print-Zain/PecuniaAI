@@ -1,0 +1,2 @@
+
+![[PecuniaAI Architecture.jpg]]
