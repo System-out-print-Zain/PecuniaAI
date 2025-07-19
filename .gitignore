@@ -2,3 +2,5 @@ node_modules
 venv
 data/document_staging/
 .env
+__pycache__
+.pytest_cache
