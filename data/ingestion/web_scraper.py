@@ -16,6 +16,12 @@ from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import re
 
+"""
+Responsibility In The ETL Pipeline:
+
+Automate the extraction of company financial documents.
+"""
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

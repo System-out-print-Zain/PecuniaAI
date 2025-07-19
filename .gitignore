@@ -1,3 +1,4 @@
 node_modules
 venv
 data/document_staging/
+.env
