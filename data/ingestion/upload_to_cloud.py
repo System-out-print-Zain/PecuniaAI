@@ -111,17 +111,13 @@ def upload_all_files(
 
     for file_path in all_files:
         try:
-            # Calculate relative path from the base directory
             relative_path = file_path.relative_to(dir_path_obj)
 
-            # Create S3 object key with proper path separators
             s3_object_key = str(relative_path).replace(os.sep, "/")
 
-            # Add prefix if provided
             if prefix:
                 s3_object_key = f"{prefix.rstrip('/')}/{s3_object_key}"
 
-            # Upload the file
             if upload_file(str(file_path), bucket_name, s3_object_key):
                 uploaded_count += 1
             else:
@@ -167,17 +163,13 @@ def upload_with_progress(
 
     for i, file_path in enumerate(all_files, 1):
         try:
-            # Calculate relative path from the base directory
             relative_path = file_path.relative_to(dir_path_obj)
 
-            # Create S3 object key with proper path separators
             s3_object_key = str(relative_path).replace(os.sep, "/")
 
-            # Add prefix if provided
             if prefix:
                 s3_object_key = f"{prefix.rstrip('/')}/{s3_object_key}"
 
-            # Upload the file
             if upload_file(str(file_path), bucket_name, s3_object_key):
                 uploaded_count += 1
             else:
@@ -187,7 +179,6 @@ def upload_with_progress(
             print(f"Error processing file {file_path}: {e}")
             failed_count += 1
 
-        # Report progress every batch_size files
         if i % batch_size == 0 or i == total_files:
             progress = (i / total_files) * 100
             print(
@@ -199,52 +190,10 @@ def upload_with_progress(
     return uploaded_count, failed_count
 
 
-def main():
-    """
-    Main function to run the upload script.
-    """
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Upload files to S3 recursively")
-    parser.add_argument("dir_path", help="Local directory path to upload")
-    parser.add_argument(
-        "--bucket",
-        default=S3_BUCKET_NAME,
-        help="S3 bucket name (defaults to S3_BUCKET_NAME env var)",
-    )
-    parser.add_argument("--prefix", default="", help="Prefix to add to S3 object keys")
-    parser.add_argument(
-        "--batch-size", type=int, default=10, help="Batch size for progress reporting"
-    )
-    parser.add_argument(
-        "--progress", action="store_true", help="Show progress during upload"
-    )
-
-    args = parser.parse_args()
-
-    if not args.bucket:
-        print("Error: S3 bucket name not provided and S3_BUCKET_NAME env var not set")
-        return 1
-
-    try:
-        if args.progress:
-            uploaded, failed = upload_with_progress(
-                args.dir_path, args.bucket, args.prefix, args.batch_size
-            )
-        else:
-            uploaded, failed = upload_all_files(args.dir_path, args.bucket, args.prefix)
-
-        if failed > 0:
-            print(f"Warning: {failed} files failed to upload")
-            return 1
-        else:
-            print(f"Successfully uploaded {uploaded} files")
-            return 0
-
-    except Exception as e:
-        print(f"Error: {e}")
-        return 1
-
-
 if __name__ == "__main__":
-    exit(main())
+    upload_with_progress(
+        dir_path="../document_staging",
+        bucket_name="pecunia-ai-document-storage",
+        prefix="sedar-documents",
+        batch_size=10,
+    )
