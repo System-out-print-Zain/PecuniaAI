@@ -1,9 +1,10 @@
 import boto3
 import os
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 from dotenv import load_dotenv
 from botocore.exceptions import NoCredentialsError, ClientError
+import json
 
 """
 This script is used to take documents from the staging directory
@@ -14,8 +15,31 @@ load_dotenv()
 S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
 s3_client = boto3.client("s3")
 
+manifest_metadata = {}
 
-def upload_file(file_path: str, bucket_name: str, obj_key: str) -> bool:
+
+def read_metadata(dir_path: str) -> Dict[str, str]:
+    """
+    Reads metadata for all files in <dir_path> and returns it as a dictionary.
+    Precondition: <dir_path> must have a manifest.json
+    """
+
+    path = f"{dir_path}/manifest.json"
+    try:
+        with open(path, "r") as f:
+            metadata = json.load(f)
+            return metadata
+    except FileNotFoundError:
+        print("The file was not found.")
+    except PermissionError:
+        print("Permission denied.")
+    except OSError as e:
+        print(f"Unexpected OS error: {e}")
+
+
+def upload_file(
+    file_path: str, bucket_name: str, obj_key: str, metadata: Dict[str, str]
+) -> bool:
     """
     Upload a file to S3.
 
@@ -29,7 +53,9 @@ def upload_file(file_path: str, bucket_name: str, obj_key: str) -> bool:
     """
     try:
         print(f"Uploading {file_path} to s3://{bucket_name}/{obj_key}...")
-        s3_client.upload_file(file_path, bucket_name, obj_key)
+        s3_client.upload_file(
+            file_path, bucket_name, obj_key, ExtraArgs={"Metadata": metadata}
+        )
         print(f"Successfully uploaded {obj_key}")
         return True
     except FileNotFoundError:
@@ -68,7 +94,7 @@ def get_all_files_recursive(dir_path: str) -> List[Path]:
     files = []
     try:
         for item in dir_path_obj.rglob("*"):
-            if item.is_file():
+            if item.is_file() and item.suffix.lower() == ".pdf":
                 files.append(item)
     except PermissionError:
         print(f"Permission denied accessing {dir_path}")
@@ -98,10 +124,15 @@ def upload_all_files(
 
     # Get all files recursively
     all_files = get_all_files_recursive(dir_path)
+    metadata = read_metadata(dir_path)
 
     if not all_files:
         print("No files found to upload")
         return 0, 0
+
+    print(metadata)
+    if not metadata:
+        print("No manifest file found")
 
     print(f"Found {len(all_files)} files to upload")
 
@@ -118,7 +149,9 @@ def upload_all_files(
             if prefix:
                 s3_object_key = f"{prefix.rstrip('/')}/{s3_object_key}"
 
-            if upload_file(str(file_path), bucket_name, s3_object_key):
+            if upload_file(
+                str(file_path), bucket_name, s3_object_key, metadata[str(relative_path)]
+            ):
                 uploaded_count += 1
             else:
                 failed_count += 1
@@ -126,74 +159,14 @@ def upload_all_files(
         except Exception as e:
             print(f"Error processing file {file_path}: {e}")
             failed_count += 1
-
-    print(f"Upload completed: {uploaded_count} successful, {failed_count} failed")
-    return uploaded_count, failed_count
-
-
-def upload_with_progress(
-    dir_path: str, bucket_name: str, prefix: str = "", batch_size: int = 10
-) -> Tuple[int, int]:
-    """
-    Upload files with progress reporting and batch processing.
-
-    Args:
-        dir_path (str): The local directory path to upload files from.
-        bucket_name (str): The S3 bucket name to upload files to.
-        prefix (str): Optional prefix to add to S3 object keys.
-        batch_size (int): Number of files to process before reporting progress.
-
-    Returns:
-        Tuple[int, int]: (uploaded_count, failed_count)
-    """
-    print(f"Starting recursive upload with progress reporting...")
-
-    all_files = get_all_files_recursive(dir_path)
-
-    if not all_files:
-        print("No files found to upload")
-        return 0, 0
-
-    total_files = len(all_files)
-    print(f"Found {total_files} files to upload")
-
-    uploaded_count = 0
-    failed_count = 0
-    dir_path_obj = Path(dir_path)
-
-    for i, file_path in enumerate(all_files, 1):
-        try:
-            relative_path = file_path.relative_to(dir_path_obj)
-
-            s3_object_key = str(relative_path).replace(os.sep, "/")
-
-            if prefix:
-                s3_object_key = f"{prefix.rstrip('/')}/{s3_object_key}"
-
-            if upload_file(str(file_path), bucket_name, s3_object_key):
-                uploaded_count += 1
-            else:
-                failed_count += 1
-
-        except Exception as e:
-            print(f"Error processing file {file_path}: {e}")
-            failed_count += 1
-
-        if i % batch_size == 0 or i == total_files:
-            progress = (i / total_files) * 100
-            print(
-                f"Progress: {i}/{total_files} ({progress:.1f}%) - "
-                f"Uploaded: {uploaded_count}, Failed: {failed_count}"
-            )
 
     print(f"Upload completed: {uploaded_count} successful, {failed_count} failed")
     return uploaded_count, failed_count
 
 
 if __name__ == "__main__":
-    upload_with_progress(
+    upload_all_files(
         dir_path="../document_staging",
         bucket_name="pecunia-ai-document-storage",
         prefix="sedar-documents",
-        batch_size=10,
     )
