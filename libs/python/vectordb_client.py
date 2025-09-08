@@ -1,6 +1,5 @@
 from pinecone import Pinecone, ServerlessSpec
-from typing import List, Dict
-
+from typing import List, Dict, Optional, Any
 
 class VectorDBClient:
     """
@@ -10,33 +9,35 @@ class VectorDBClient:
     DIMENSION = 1536  # For OpenAI's Model
 
     METADATA_FIELDS = {
+        "table": False,
         "source_file": False,
-        "chunk_num": False,
-        "section_title": False,
         "page_number": False,
-        "content_preview": False,
-        "company_ticker": False,
-        "fiscal_year": False,
+        "company_name": False,
+        "filing_date": False,
+        "doc_type": False,
+        "og_text": False
     }
 
     MAX_CONTENT_PREVIEW_LENGTH = 100
 
-    def __init__(self, api_key: str):
-        self._client = Pinecone(api_key=api_key)
+    def __init__(self, api_key: str, index_name: str):
+        # Create Pinecone client instance
+        self.pc = Pinecone(api_key=api_key)
+        spec = ServerlessSpec(cloud="aws", region="us-east-1")
 
-        index_name = "sem-search-index"
-
-        if index_name not in self._client.list_indexes().names():
-            pc.create_index(
+        # Create index if it doesn't exist
+        if index_name not in self.pc.list_indexes().names():
+            self.pc.create_index(
                 name=index_name,
-                dimension=VectorDBClient.DIMENSION,
+                dimension=self.DIMENSION,
                 metric="cosine",
-                spec=ServerlessSpec(),
+                spec=spec
             )
 
-        self._index = self._client.Index(index_name)
+        # Connect to the index
+        self._index = self.pc.Index(index_name)
 
-    def upsert_vectors(self, vectors: List[Dict[str, Any]]):
+    def upsert_vectors(self, vectors: List[Dict[str, Any]], batch_size=50):
         """
         Upserts the given list of vector into the DB.
 
@@ -66,7 +67,10 @@ class VectorDBClient:
                 else:
                     print(f"Vector {i+1} is invalid.")
 
-            self._index.upsert(vectors=valid_vectors)
+            for i in range(0, len(vectors), batch_size):
+                batch = vectors[i:i+batch_size]
+                self._index.upsert(vectors=batch)
+            
             print(f"Upserted {len(valid_vectors)} to Pinecone.")
 
         except Exception as e:
@@ -97,15 +101,11 @@ class VectorDBClient:
                 raise ValueError(
                     f"Missing required metadata fields: {', '.join(missing_fields)}"
                 )
-
-            content_preview = metadata.get("content_preview", "")
-            if len(content_preview) > self.MAX_CONTENT_PREVIEW_LENGTH:
-                metadata["content_preview"] = content_preview[
-                    : self.MAX_CONTENT_PREVIEW_LENGTH
-                ]
+            
+            return True
 
         except ValueError as e:
-            print(f"Validation error with vector id {id}")
+            print(f"Validation error {e}")
             return False
         except Exception as e:
             print(f"Error upserting vector id {id}")
