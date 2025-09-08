@@ -12,3 +12,4 @@ openai>=1.35.0
 pinecone>=3.0.0
 pdfplumber>=0.11.7
 pypdf>=5.0.0
+wordninja>=2.0.0
