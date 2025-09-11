@@ -20,42 +20,28 @@ class VectorDBClient:
 
     MAX_CONTENT_PREVIEW_LENGTH = 100
 
-    def __init__(self, api_key: str, index_name: str):
+    INDEX_NAME = "pecunia-ai-index"
+
+    def __init__(self, api_key: str):
         # Create Pinecone client instance
         self.pc = Pinecone(api_key=api_key)
         spec = ServerlessSpec(cloud="aws", region="us-east-1")
 
         # Create index if it doesn't exist
-        if index_name not in self.pc.list_indexes().names():
+        if VectorDBClient.INDEX_NAME not in self.pc.list_indexes().names():
             self.pc.create_index(
-                name=index_name,
+                name=VectorDBClient.INDEX_NAME,
                 dimension=self.DIMENSION,
                 metric="cosine",
                 spec=spec
             )
 
         # Connect to the index
-        self._index = self.pc.Index(index_name)
+        self._index = self.pc.Index(VectorDBClient.INDEX_NAME)
 
     def upsert_vectors(self, vectors: List[Dict[str, Any]], batch_size=50):
         """
         Upserts the given list of vector into the DB.
-
-        Args
-        vectors: A list where each element has the following structure:
-            id: A unique identifier for the vector. Typically derived from source file key and chunk number
-            values: A list of floats representing the vector embedding
-            metadata: A dictionary containing vector metadata fields. It has the following fields:
-                source_file: S3 object key for the pdf document from which the vector was extracted
-                chunk_num: The sequential chunk number of the text corresponding to the embedding
-                section_title: the section name of the text chunk corresponding to the embedding
-                page_number: the page number of the text chunk corresponding to the embedding
-                content_preview: A prefix of the text chunk. It should have length <= 100
-                company_ticker: The ticker symbol of the company the embedding relates to
-                fiscal_year: The year of the text corresponding to the embedding
-
-        Returns:
-            True if successful. False otherwise
         """
         try:
             valid_vectors = []
@@ -67,8 +53,8 @@ class VectorDBClient:
                 else:
                     print(f"Vector {i+1} is invalid.")
 
-            for i in range(0, len(vectors), batch_size):
-                batch = vectors[i:i+batch_size]
+            for i in range(0, len(valid_vectors), batch_size):
+                batch = valid_vectors[i:i+batch_size]
                 self._index.upsert(vectors=batch)
             
             print(f"Upserted {len(valid_vectors)} to Pinecone.")

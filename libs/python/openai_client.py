@@ -8,9 +8,10 @@ class OpenAIEmbeddingModel:
     Client For An OpenAI Embedding Model.
     """
 
-    def __init__(self, api_key: str, model: str = "text-embedding-3-small"):
+    MODEL = "text-embedding-3-small"
+
+    def __init__(self, api_key: str):
         self._client = OpenAI(api_key=api_key)
-        self._model = model
 
     def create_embedding(self, text: str) -> List[float]:
         """
@@ -25,7 +26,7 @@ class OpenAIEmbeddingModel:
         try:
             transformed_text = text.replace("\n", " ")
             response = self._client.embeddings.create(
-                input=[transformed_text], model=self._model
+                input=[transformed_text], model=OpenAIEmbeddingModel.MODEL
             )
             return response.data[0].embedding
 
@@ -44,4 +45,23 @@ class OpenAIEmbeddingModel:
 
 
 class OpenAILLM:
-    pass
+
+    MODEL =  "gpt-4o-mini"
+    MAX_TOKENS = 512
+    SYSTEM_PROMPT = "You are a helpful AI financial companion to value investors in the Canadian stock market. Use the provided context to answer the user's query. If the context does not contain the answer, respond with 'I don't know'. Be concise and to the point."
+    
+    def __init__(self, api_key: str):
+        self._client = OpenAI(api_key=api_key)
+
+    def generate_text(self, prompt: str) -> str:
+        response = self._client.chat.completions.create(
+            model=OpenAILLM.MODEL,
+            messages=[
+                {"role": "system", "content": OpenAILLM.SYSTEM_PROMPT},
+                {"role": "user", "content": prompt},
+            ],
+            max_tokens=OpenAILLM.MAX_TOKENS,
+        )
+        return response.choices[0].message.content.strip()
+
+

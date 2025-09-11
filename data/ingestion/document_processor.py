@@ -397,7 +397,7 @@ if __name__ == "__main__":
     # --- Clients --- 
     s3_client = boto3.client("s3")
     embedding_model = openai_client.OpenAIEmbeddingModel(api_key=OPENAI_API_KEY)
-    vector_db_client = vectordb_client.VectorDBClient(api_key=PINECONE_API_KEY, index_name="pecunia-ai-index")
+    vector_db_client = vectordb_client.VectorDBClient(api_key=PINECONE_API_KEY, index_name=vectordb_client.VectorDBClient.INDEX_NAME)
 
         # --- Process documents ---
     for raw_pdf in iter_documents_from_prefix(s3_client, S3_BUCKET, S3_DOC_PREFIX):
