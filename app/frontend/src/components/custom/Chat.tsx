@@ -9,6 +9,8 @@ type Message = {
     content: string
 }
 
+const API_URL = import.meta.env.VITE_API_URL
+
 export default function Chat() {
     const [messages, setMessages] = useState<Message[]>([])
     const [input, setInput] = useState("")
@@ -27,7 +29,7 @@ export default function Chat() {
         setLoading(true)
 
         // --- call your RAG backend ---
-        const res = await fetch("http://localhost:8000/chat", {
+        const res = await fetch(API_URL + "/api/chat-completion", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ query: input }),

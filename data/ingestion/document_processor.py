@@ -20,8 +20,8 @@ import uuid
 from typing import Optional, List
 from dotenv import load_dotenv
 
-import libs.python.openai_client as openai_client  
-import libs.python.vectordb_client as vectordb_client
+import pecunia_helpers.backend_data.openai_client as openai_client  
+import pecunia_helpers.backend_data.vectordb_client as vectordb_client
 
 
 @dataclass

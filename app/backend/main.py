@@ -1,7 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from models import ChatRequest, ChatResponse
 from services import run_rag_pipeline
-from libs.python.openai_client import OpenAILLM
+from fastapi.middleware.cors import CORSMiddleware
+from backend_data.openai_client import OpenAILLM
 
 import tiktoken
 
@@ -10,9 +11,18 @@ MAX_TOKENS = OpenAILLM.MAX_TOKENS
 
 app = FastAPI(title="PecuniaAI API")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 @app.post("/api/chat-completion", response_model=ChatResponse)
 async def chat_completion(request: ChatRequest):
-    num_tokens = len(encoding.encode(request.message))
+    num_tokens = len(encoding.encode(request.query))
     
     if num_tokens > MAX_TOKENS:
         raise HTTPException(

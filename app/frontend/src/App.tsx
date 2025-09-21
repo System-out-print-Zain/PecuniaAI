@@ -11,6 +11,9 @@ type Message = {
   content: string
 }
 
+const API_URL = import.meta.env.VITE_API_URL
+console.log("API_URL:", API_URL)
+
 function App() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
@@ -29,7 +32,7 @@ function App() {
     setLoading(true)
 
     try {
-      const res = await fetch("http://localhost:8000/chat", {
+      const res = await fetch(API_URL + "/api/chat-completion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: input }),
