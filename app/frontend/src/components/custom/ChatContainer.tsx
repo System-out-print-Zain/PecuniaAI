@@ -6,7 +6,7 @@ type Props = {
 
 export default function ChatContainer({ children }: Props) {
     return (
-        <ScrollArea className="flex-1 border rounded-lg p-4 bg-gray-50 dark:bg-gray-900">
+        <ScrollArea className="flex-1 p-4">
             {children}
         </ScrollArea>
     )

@@ -3,6 +3,7 @@ import ChatContainer from "@/components/custom/ChatContainer"
 import MessageBubble from "@/components/custom/MessageBubble"
 import ChatInput from "@/components/custom/ChatInput"
 import ChatLoader from "@/components/custom/ChatLoader"
+import PecuniaLogo from '@/assets/PecuniaAI-Logo.png'
 import './App.css'
 
 type Message = {
@@ -47,16 +48,17 @@ function App() {
   }
 
   return (
-    <div className="flex flex-col h-screen max-w-2xl mx-auto p-4">
+    <div className="flex flex-col h-screen w-screen overflow-hidden">
+      <header className="flex flex-shrink-0 items-center gap-4 bg-gray-800 text-white py-4 px-6 shadow-md rounded-lg">
+        <img src={PecuniaLogo} alt="Pecunia AI Logo" className="h-6 w-6" />
 
-      {/* Sticky Header */}
-      <header className="sticky top-0 z-20 bg-gray-800 text-white py-4 px-6 rounded-lg shadow-md">
-        <h1 className="text-xl font-bold">Pecunia AI</h1>
-        <p className="text-sm text-gray-300">Your AI-powered financial assistant</p>
+        <div className="flex items-center space-x-2">
+          <h1 className="text-xl font-bold">Pecunia AI</h1>
+          <p className="text-sm text-gray-300">Your AI-powered financial assistant</p>
+        </div>
       </header>
 
-      {/* Chat area */}
-      <div className="flex-1 flex flex-col mt-4 overflow-hidden">
+      <div className="flex-1 overflow-y-auto flex flex-col px-4">
         <ChatContainer>
           {messages.map((msg, idx) => (
             <MessageBubble key={idx} role={msg.role} content={msg.content} />
@@ -65,12 +67,14 @@ function App() {
           <div ref={scrollRef} />
         </ChatContainer>
 
-        <ChatInput
-          value={input}
-          onChange={setInput}
-          onSend={sendMessage}
-          disabled={loading}
-        />
+        <div className="mt-2 flex-shrink-0">
+          <ChatInput
+            value={input}
+            onChange={setInput}
+            onSend={sendMessage}
+            disabled={loading}
+          />
+        </div>
       </div>
     </div>
   )

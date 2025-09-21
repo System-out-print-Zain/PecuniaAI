@@ -21,7 +21,7 @@ export default function Chat() {
 
     const sendMessage = async () => {
         if (!input.trim()) return
-        const userMessage = { role: "user", content: input }
+        const userMessage = { role: "user", content: input } as Message
         setMessages((prev) => [...prev, userMessage])
         setInput("")
         setLoading(true)

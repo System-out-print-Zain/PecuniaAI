@@ -11,7 +11,7 @@ type Props = {
 export default function ChatInput({ value, onChange, onSend, disabled }: Props) {
     return (
         <form
-            className="flex mt-4 space-x-2"
+            className="flex mt-4 space-x-5"
             onSubmit={(e) => {
                 e.preventDefault()
                 onSend()
@@ -23,8 +23,8 @@ export default function ChatInput({ value, onChange, onSend, disabled }: Props) 
                 placeholder="Ask something..."
                 disabled={disabled}
             />
-            <Button type="submit" disabled={disabled}>
-                Send
+            <Button className="text-white bg-black" type="submit" disabled={disabled}>
+                Ask
             </Button>
         </form>
     )
