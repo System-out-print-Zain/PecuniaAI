@@ -1,0 +1,10 @@
+Two-Staged Pipeline
+
+1.
+
+SECAR+ Repository PDFs --- Webscraper ---> AWS S3 
+
+2.
+
+AWS S3 PDFs --- Document Parsing (Camelot, PDFPlumber) ---> Raw Content Artifacts --- Chunking ---> Chunked Artifacts
+--- Vector Embedding (Open AI) ---> Vector Embeddings --- Upsert Into VectorDB (Pinecone) ---> Pinecone.
