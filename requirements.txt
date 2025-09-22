@@ -13,3 +13,6 @@ pinecone>=3.0.0
 pdfplumber>=0.11.7
 pypdf>=5.0.0
 wordninja>=2.0.0
+fastapi>=0.100.0
+uvicorn>=0.23.0
+tiktoken>=0.4.0
